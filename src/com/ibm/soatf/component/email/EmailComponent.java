@@ -567,7 +567,10 @@ public class EmailComponent extends AbstractSoaTFComponent {
     private static void storeAttachments(Message message, File path, String fileNamePrefix) throws MessagingException, IOException {
         if (!(message.getContent() instanceof Multipart)) {
                 final File file = new File(path, fileNamePrefix+MESSAGE_SUFFIX);
-                final StringBuilder bodyContent = new StringBuilder(message.getSubject());
+                final StringBuilder bodyContent = new StringBuilder();
+                if (message.getSubject() != null) {
+                    bodyContent.append(message.getSubject());
+                }
                 bodyContent.append("\n");
                 bodyContent.append(message.getContent().toString());                       
                 FileUtils.writeStringToFile(file, bodyContent.toString());
@@ -579,7 +582,10 @@ public class EmailComponent extends AbstractSoaTFComponent {
             BodyPart bodyPart = multipart.getBodyPart(i);
             if(!Part.ATTACHMENT.equalsIgnoreCase(bodyPart.getDisposition()) && (bodyPart.getFileName() == null || "".equals(bodyPart.getFileName()))) {
                 final File file = new File(path, fileNamePrefix+MESSAGE_SUFFIX);
-                final StringBuilder bodyContent = new StringBuilder(message.getSubject());
+                final StringBuilder bodyContent = new StringBuilder();
+                if (message.getSubject() != null) {
+                    bodyContent.append(message.getSubject());
+                }                
                 bodyContent.append("\n");
                 bodyContent.append(bodyPart.getContent().toString());                       
                 FileUtils.writeStringToFile(file, bodyContent.toString());

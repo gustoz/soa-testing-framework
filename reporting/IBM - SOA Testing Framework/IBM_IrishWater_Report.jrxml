@@ -53,7 +53,7 @@
 				<textElement markup="none">
 					<font fontName="Arial" size="24" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Irish Water " + $F{stfconf:release}
+				<textFieldExpression><![CDATA["Vodafone GNP " + $F{stfconf:release}
 +"\nUnit Test Plan/Results"
 +"\n" + $F{stfconf:buildId} + " " + $F{stfconf:buildName}]]></textFieldExpression>
 			</textField>
