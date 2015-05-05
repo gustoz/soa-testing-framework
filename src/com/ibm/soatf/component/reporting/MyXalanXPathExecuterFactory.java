@@ -114,7 +114,10 @@ public class MyXalanXPathExecuterFactory implements JRXPathExecuterFactory {
                 return "http://www.ibm.com/SOATF/Config/Iface/SOAP";
             }else if(arg0.equalsIgnoreCase("utilconf")){
                 return "http://www.ibm.com/SOATF/Config/Iface/UTIL";                
+            }else if(arg0.equalsIgnoreCase("emailconf")){
+                return "http://www.ibm.com/SOATF/Config/Iface/EMAIL";                
             }
+            
             return null;
         }
 

@@ -129,20 +129,6 @@ public class EmailComponent extends AbstractSoaTFComponent {
         constructComponent();
     }
 
-    /*public FTPComponent(ComponentResult componentOperationResult) {
-     super(SOATFCompType.FTP, componentOperationResult);
-     this.hostName = "zarik";
-     this.port = "21";
-     this.user = "anonymous";
-     this.password = "aaa";
-     this.security = Security.NONE;
-     this.stageDirectory = "salmon/out";
-     this.errorDirectory = "salmon/error";
-     this.archiveDirectory = "salmon/archive";
-     //this.filePattern = this.ftpConfiguration.getFilePattern();
-     this.fileName = "test.data";
-     workingDirectoryPath = "C:\\test\\";
-     }*/
     @Override
     protected final void constructComponent() {
 
@@ -284,8 +270,9 @@ public class EmailComponent extends AbstractSoaTFComponent {
             ProgressMonitor.increment("Reading the email message...");
             Message msg = inbox.getMessage(inbox.getMessageCount());
             
-            ProgressMonitor.increment("Saving the email message to disk...");               
-            storeAttachments(msg, workingDir, this.hostName);
+            ProgressMonitor.increment("Saving the email message to disk...");
+            final StringBuilder storePrefix = new StringBuilder(this.hostName).append(NAME_DELIMITER).append(this.email.getInbound().getFolder());
+            storeAttachments(msg, workingDir, storePrefix.toString());
             cor.addMsg("Email was successfully read.");
             cor.markSuccessful();
         } catch (MessagingException | IOException emailex) {
@@ -294,227 +281,16 @@ public class EmailComponent extends AbstractSoaTFComponent {
             throw new EmailComponentException(msg, emailex);
         }
     }
-
-//    private void checkFolderForFile(String folderName) throws EmailComponentException {
-//        FTPClient client = null;
-//        if (actualFileUsed == null) {
-//            final String msg = "File name was not set.";
-//            cor.addMsg(msg);
-//            throw new EmailComponentException(msg);
-//        }
-//        switch (security) {
-//            case NONE:
-//                try {
-//                    ProgressMonitor.init(5, "Connecting to FTP server...");
-//                    client = new FTPClient();
-//                    client.connect(this.hostName, this.port);
-//                    ProgressMonitor.increment("Logging in...");
-//                    client.login(this.user, this.password);
-//                    ProgressMonitor.increment("Changing directory...");
-//                    client.changeDirectory(folderName);
-//                    ProgressMonitor.increment("Listing files...");
-//                    FTPFile[] fileArray = client.list();
-//                    boolean found = false;
-//                    for (FTPFile file : fileArray) {
-//                        String name = file.getName();
-//                        if (name != null && (name.equals(actualFileUsed) || name.endsWith("__" + actualFileUsed))) {
-//                            found = true;
-//                            break;
-//                        }
-//                    }
-//                    if (found) {
-//                        logger.info("File with name '" + actualFileUsed + "' was found in directory: " + folderName);
-//                        cor.addMsg("File with name '" + actualFileUsed + "' was found in directory: " + folderName);
-//                        cor.markSuccessful();
-//                    } else {
-//                        final String message = "File with name '" + actualFileUsed + "' was not found in directory: " + folderName;
-//                        logger.info(message);
-//                        cor.addMsg(message);
-//                        String additionalMessage=null;
-//                        client.changeDirectory(this.stageDirectory);
-//                        fileArray = client.list();
-//                        for (int i = 0; i < fileArray.length; i++) {
-//                            FTPFile file = fileArray[i];
-//                            String name = file.getName();
-//                            if (name != null && (name.equals(actualFileUsed) || name.endsWith("__" + actualFileUsed))) {
-//                                additionalMessage = "The file was found in the original directory, it seems not to be polled at all.\n";
-//                                break;
-//                            }
-//                        }
-//                        if (additionalMessage == null) {
-//                            client.changeDirectory(this.errorDirectory);
-//                            fileArray = client.list();
-//                            for (int i = 0; i < fileArray.length; i++) {
-//                                FTPFile file = fileArray[i];
-//                                String name = file.getName();
-//                                if (name != null && (name.equals(actualFileUsed) || name.endsWith("__" + actualFileUsed))) {
-//                                    additionalMessage = "The file was found in the error directory. There was an error while processing the file.";
-//                                    break;
-//                                }
-//                            }
-//                        }
-//                        if (additionalMessage == null) {
-//                            client.changeDirectory(this.archiveDirectory);
-//                            fileArray = client.list();
-//                            for (int i = 0; i < fileArray.length; i++) {
-//                                FTPFile file = fileArray[i];
-//                                String name = file.getName();
-//                                if (name != null && (name.equals(actualFileUsed) || name.endsWith("__" + actualFileUsed))) {
-//                                    additionalMessage = "The file was found in the archive directory. File was processed without any errors.";
-//                                    break;
-//                                }
-//                            }
-//                        }
-//                        cor.addMsg(additionalMessage);                        
-//                        throw new EmailComponentException(message);
-//                    }
-//                    break;
-//                } catch (FTPException | FTPIllegalReplyException | IllegalStateException | IOException | FTPDataTransferException | FTPAbortedException | FTPListParseException ftpex) {
-//                    final String msg = "FTP error while trying to search in the remote folder";
-//                    cor.addMsg(msg);
-//                    throw new EmailComponentException(msg, ftpex);
-//                } finally {
-//                    ProgressMonitor.increment("Disconnecting...");
-//                    if (client != null) {
-//                        try {
-//                            client.disconnect(true);
-//                        } catch (IllegalStateException | IOException | FTPIllegalReplyException | FTPException ex) {;}
-//                    }
-//                }
-//            case SSH:
-//                Session session = null;
-//                ChannelSftp channelSftp = null;
-//
-//                try {
-//                    JSch jsch = new JSch();
-//                    String sshMsg = "Creating SSH session...";
-//                    ProgressMonitor.init(6, sshMsg);
-//                    logger.info(sshMsg);
-//                    cor.addMsg(sshMsg, null);
-//                    session = jsch.getSession(this.user, this.hostName, this.port);
-//                    session.setPassword(this.password);
-//                    session.setConfig(FileComponent.CONFIG);
-//                    sshMsg = "SSH session created.";
-//                    logger.info(sshMsg);
-//                    cor.addMsg(sshMsg, null);
-//
-//                    sshMsg = "Connecting to SSH session...";
-//                    ProgressMonitor.increment(sshMsg);
-//                    logger.info(sshMsg);
-//                    cor.addMsg(sshMsg, null);
-//                    session.connect();
-//                    sshMsg = "Connected to SSH session.";
-//                    logger.info(sshMsg);
-//                    cor.addMsg(sshMsg, null);
-//
-//                    sshMsg = "Opening SSH channel...";
-//                    ProgressMonitor.increment(sshMsg);
-//                    logger.info(sshMsg);
-//                    cor.addMsg(sshMsg, null);
-//                    channelSftp = (ChannelSftp) session.openChannel("sftp");
-//                    sshMsg = "SSH channel opened.";
-//                    logger.info(sshMsg);
-//                    cor.addMsg(sshMsg, null);
-//
-//                    sshMsg = "Connecting to SSH channel...";
-//                    ProgressMonitor.increment(sshMsg);
-//                    logger.info(sshMsg);
-//                    cor.addMsg(sshMsg, null);
-//                    channelSftp.connect();
-//                    sshMsg = "Connected to SSH channel.";
-//                    logger.info(sshMsg);
-//                    cor.addMsg(sshMsg);
-//
-//                    Vector ls;
-//
-//                    sshMsg = "Listing '" + folderName + "' content...";
-//                    ProgressMonitor.increment("Listing directory content...");
-//                    logger.info(sshMsg);
-//                    cor.addMsg(sshMsg);
-//                    ls = channelSftp.ls(folderName);
-//
-//                    if(!Utils.isEmpty(ls)) {
-//                        for (Object object : ls) {
-//                            ChannelSftp.LsEntry entry = (ChannelSftp.LsEntry) object;
-//                            final String name = entry.getFilename();
-//                            if (name != null && (name.equals(actualFileUsed) || name.endsWith("__" + actualFileUsed))) {
-//                            //if (entry.getFilename().matches(fileName)) {
-//                                String msg = "File '" + actualFileUsed + "' found in '" + folderName + "'";
-//                                logger.info(msg);
-//                                cor.addMsg(msg);
-//                                cor.markSuccessful();
-//                                return;
-//                            }
-//                        }
-//                    }
-//                    sshMsg = "File '" + actualFileUsed + "' not found in '" + folderName + "'";
-//                    cor.addMsg(sshMsg);
-//
-//                    String additionalMessage=null;
-//                    ls = channelSftp.ls(this.stageDirectory);                        
-//                    if(!Utils.isEmpty(ls)) {
-//                        for (Object object : ls) {
-//                            ChannelSftp.LsEntry entry = (ChannelSftp.LsEntry) object;
-//                            final String name = entry.getFilename();
-//                            if (name != null && (name.equals(actualFileUsed) || name.endsWith("__" + actualFileUsed))) {
-//                                additionalMessage =  "The file was found in the original directory, it seems not to be polled at all.\n";
-//                                break;
-//                            }
-//                        }
-//                    }
-//                    if (additionalMessage == null) {
-//                        ls = channelSftp.ls(this.errorDirectory);     
-//                        if(!Utils.isEmpty(ls)) {
-//                            for (Object object : ls) {
-//                                ChannelSftp.LsEntry entry = (ChannelSftp.LsEntry) object;
-//                                final String name = entry.getFilename();
-//                                if (name != null && (name.equals(actualFileUsed) || name.endsWith("__" + actualFileUsed))) {
-//                                    additionalMessage =  "The file was found in the error directory. There was an error while processing the file.";
-//                                    break;
-//                                }
-//                            }
-//                        }
-//                    }
-//                    if (additionalMessage == null) {
-//                        ls = channelSftp.ls(this.archiveDirectory);     
-//                        if(!Utils.isEmpty(ls)) {
-//                            for (Object object : ls) {
-//                                ChannelSftp.LsEntry entry = (ChannelSftp.LsEntry) object;
-//                                final String name = entry.getFilename();
-//                                if (name != null && (name.equals(actualFileUsed) || name.endsWith("__" + actualFileUsed))) {
-//                                    additionalMessage = "The file was found in the archive directory. File was processed without any errors.";
-//                                    break;
-//                                }
-//                            }
-//                        }                            
-//                    }
-//                    cor.addMsg(additionalMessage);                         
-//                    throw new EmailComponentException(sshMsg);
-//                } catch (JSchException | SftpException ftpex) {
-//                    final String msg = "FTP error while trying to search in the remote folder";
-//                    cor.addMsg(msg);
-//                    throw new EmailComponentException(msg, ftpex);
-//                } finally {
-//                    ProgressMonitor.increment("Disconnecting...");
-//                    FileComponent.disconnect(session, channelSftp);
-//                }                                                                                                                                                                                                                                                                                                                                
-//            default:
-//                final String msg = "Security type not supported: " + security;
-//                logger.info(msg);
-//                cor.addMsg(msg);
-//                throw new EmailComponentException(msg);
-//        }
-//    }
     
      private void emailCheck() throws EmailComponentException {
         if (email.getEmailAttachment() != null) {
             ProgressMonitor.init(2+email.getEmailAttachment().size(), "Preparing to read email structure...");        
         } else {
-            ProgressMonitor.init(2, "Preparing for reading email structure...");
+            ProgressMonitor.init(2, "Preparing to read email structure...");
         }
         boolean hasError = false;
-
-        File file = new File(workingDir, this.hostName+MESSAGE_SUFFIX);
+        final StringBuilder emailBodyFileName = new StringBuilder(this.hostName).append(NAME_DELIMITER).append(this.email.getInbound().getFolder()).append(MESSAGE_SUFFIX);
+        File file = new File(workingDir, emailBodyFileName.toString());
         if (!file.exists()) {
             hasError = true;
             cor.addMsg("Email body was not found");
@@ -531,6 +307,8 @@ public class EmailComponent extends AbstractSoaTFComponent {
                 if (subject == null || !matcher.find()) {
                     hasError = true;
                     cor.addMsg("Email subject don't match the expected string");
+                } else {
+                    cor.addMsg("Email subject matches the expected string");
                 }
             } catch (IOException e) {
                 hasError = true;
@@ -540,31 +318,36 @@ public class EmailComponent extends AbstractSoaTFComponent {
         ProgressMonitor.increment("Email body & subject checked");
         if (email.getEmailAttachment() != null) {
             for (Attachment a: email.getEmailAttachment()) {
-                final String fileName = new StringBuilder(this.hostName).append(NAME_DELIMITER).append(a.getFileName()).toString();
+                final String fileName = new StringBuilder(this.hostName).append(NAME_DELIMITER).append(this.email.getInbound().getFolder()).append(NAME_DELIMITER).append(a.getFileName()).toString();
                 logger.trace("Looking for attachment with name "+fileName);
+                boolean foundAttachment = true;
                 if (attachments.size() > 0) {
                     if (attachments.get(fileName.toLowerCase()) == null) {
-                        hasError = true;
-                        cor.addMsg("Email attachment with name "+fileName+" was not found");                    
+                        foundAttachment = false;                 
                     }
                 } else {
                     file = new File(workingDir, fileName.toLowerCase());
                     if (!file.exists()) {
-                        hasError = true;
-                        cor.addMsg("Email attachment with name "+fileName+" was not found");                        
+                        foundAttachment = false;
                     }
                 }
-                ProgressMonitor.increment("Email attachmend "+fileName+" was checked");
+                if (!foundAttachment) {
+                    hasError = true;
+                    cor.addMsg("Attachment with name "+fileName+" was not found");
+                } else {
+                    cor.addMsg("Attachment with name "+fileName+" was found");
+                }
+                ProgressMonitor.increment("Email attachment "+fileName+" was checked");
             }
         }
         if (!hasError) {
-            cor.addMsg("Email structure is complete.");
+            cor.addMsg("Email structure is complete and correct.");
             cor.markSuccessful();
         }
         ProgressMonitor.markDone();
     }
      
-    private static void storeAttachments(Message message, File path, String fileNamePrefix) throws MessagingException, IOException {
+    private void storeAttachments(Message message, File path, String fileNamePrefix) throws MessagingException, IOException {
         if (!(message.getContent() instanceof Multipart)) {
                 final File file = new File(path, fileNamePrefix+MESSAGE_SUFFIX);
                 final StringBuilder bodyContent = new StringBuilder();
@@ -574,6 +357,9 @@ public class EmailComponent extends AbstractSoaTFComponent {
                 bodyContent.append("\n");
                 bodyContent.append(message.getContent().toString());                       
                 FileUtils.writeStringToFile(file, bodyContent.toString());
+                String msg = "Successfully stored email body <a href='file://"+file.getAbsolutePath()+"'>"+file.getAbsolutePath()+"</a>";
+                logger.info(msg);
+                cor.addMsg(msg, null);
                 return;
         }
         Multipart multipart = (Multipart) message.getContent();
@@ -589,11 +375,17 @@ public class EmailComponent extends AbstractSoaTFComponent {
                 bodyContent.append("\n");
                 bodyContent.append(bodyPart.getContent().toString());                       
                 FileUtils.writeStringToFile(file, bodyContent.toString());
+                String msg = "Successfully stored email body <a href='file://"+file.getAbsolutePath()+"'>"+file.getAbsolutePath()+"</a>";
+                logger.info(msg);
+                cor.addMsg(msg, null);                
                 continue;
             }
             final String filename = new StringBuilder(fileNamePrefix).append(NAME_DELIMITER).append(bodyPart.getFileName()).toString();
             final File file = new File(path, filename);
             FileUtils.writeStringToFile(file, bodyPart.getContent().toString());
+            String msg = "Successfully stored email attachment <a href='file://"+file.getAbsolutePath()+"'>"+file.getAbsolutePath()+"</a>";
+            logger.info(msg);
+            cor.addMsg(msg, null);            
             //attachments.add(file);
             attachments.put(filename.toLowerCase(), file);
         }
