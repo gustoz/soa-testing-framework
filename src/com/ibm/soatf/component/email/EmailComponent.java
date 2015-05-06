@@ -31,6 +31,7 @@ import com.ibm.soatf.flow.FlowExecutor;
 import com.ibm.soatf.flow.FrameworkExecutionException;
 import com.ibm.soatf.flow.OperationResult;
 import com.ibm.soatf.gui.ProgressMonitor;
+import com.ibm.soatf.tool.FileSystem;
 import com.ibm.soatf.tool.Utils;
 import com.sun.mail.pop3.POP3SSLStore;
 import java.io.BufferedReader;
@@ -44,7 +45,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -310,9 +310,11 @@ public class EmailComponent extends AbstractSoaTFComponent {
                 } else {
                     cor.addMsg("Email subject matches the expected string");
                 }
-            } catch (IOException e) {
+            } catch (IOException ex) {
                 hasError = true;
-                cor.addMsg("Error while reading the email subject");
+                final String msg = "Error while reading the email subject";
+                cor.addMsg(msg);
+                throw new EmailComponentException(msg, ex);
             }            
         }
         ProgressMonitor.increment("Email body & subject checked");
@@ -343,6 +345,10 @@ public class EmailComponent extends AbstractSoaTFComponent {
         if (!hasError) {
             cor.addMsg("Email structure is complete and correct.");
             cor.markSuccessful();
+        } else {
+            final String msg ="Email structure is not complete.";
+            cor.addMsg(msg);
+            throw new EmailComponentException(msg);
         }
         ProgressMonitor.markDone();
     }
@@ -357,9 +363,9 @@ public class EmailComponent extends AbstractSoaTFComponent {
                 bodyContent.append("\n");
                 bodyContent.append(message.getContent().toString());                       
                 FileUtils.writeStringToFile(file, bodyContent.toString());
-                String msg = "Successfully stored email body <a href='file://"+file.getAbsolutePath()+"'>"+file.getAbsolutePath()+"</a>";
-                logger.info(msg);
-                cor.addMsg(msg, null);
+                final String msg = "Successfully stored email subject & body in [FILE: %s]";
+                logger.debug(String.format(msg, file.getAbsolutePath()));
+                cor.addMsg(msg,"<a href='file://"+file.getAbsolutePath()+"'>" + file.getAbsolutePath() + "</a>", FileSystem.getRelativePath(file));
                 return;
         }
         Multipart multipart = (Multipart) message.getContent();
@@ -375,17 +381,17 @@ public class EmailComponent extends AbstractSoaTFComponent {
                 bodyContent.append("\n");
                 bodyContent.append(bodyPart.getContent().toString());                       
                 FileUtils.writeStringToFile(file, bodyContent.toString());
-                String msg = "Successfully stored email body <a href='file://"+file.getAbsolutePath()+"'>"+file.getAbsolutePath()+"</a>";
-                logger.info(msg);
-                cor.addMsg(msg, null);                
+                final String msg = "Successfully stored email subject & body in [FILE: %s]";
+                logger.debug(String.format(msg, file.getAbsolutePath()));
+                cor.addMsg(msg,"<a href='file://"+file.getAbsolutePath()+"'>" + file.getAbsolutePath() + "</a>", FileSystem.getRelativePath(file));
                 continue;
             }
             final String filename = new StringBuilder(fileNamePrefix).append(NAME_DELIMITER).append(bodyPart.getFileName()).toString();
             final File file = new File(path, filename);
             FileUtils.writeStringToFile(file, bodyPart.getContent().toString());
-            String msg = "Successfully stored email attachment <a href='file://"+file.getAbsolutePath()+"'>"+file.getAbsolutePath()+"</a>";
-            logger.info(msg);
-            cor.addMsg(msg, null);            
+            final String msg = "Successfully stored email attachment in [FILE: %s]";
+            logger.debug(String.format(msg, file.getAbsolutePath()));
+            cor.addMsg(msg,"<a href='file://"+file.getAbsolutePath()+"'>" + file.getAbsolutePath() + "</a>", FileSystem.getRelativePath(file));
             //attachments.add(file);
             attachments.put(filename.toLowerCase(), file);
         }
